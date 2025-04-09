@@ -41,7 +41,7 @@ def getAluno():
     r = dados['alunos']
     return jsonify(r)
 
-@app.route('professores', methods=['GET'])
+@app.route('/professores', methods=['GET'])
 def getProfessores():
     r = dados['professores']
     return jsonify(r)
