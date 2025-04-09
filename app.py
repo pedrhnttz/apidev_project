@@ -34,17 +34,44 @@ dados = {
     ]
 }
 
-# Rotas
+# Classes para tratativa de exceções
+
+class AlunoNotFound(Exception):
+    def _init_(self, msg="Erro, Aluno não identificado ou inexistente!"):
+        self.msg = msg
+        super()._init_(self.msg)
+
+# Funções para requisições
+
+def getAlunoById(id_aluno):
+    for aluno in dados['alunos']:
+        if aluno['id'] == id_aluno:
+            return aluno
+    raise AlunoNotFound()
+
+# Rotas /alunos
 
 @app.route('/alunos', methods=['GET'])
-def getAluno():
+def getAlunos():
     r = dados['alunos']
     return jsonify(r)
+
+@app.route('/alunos/<int:id_aluno>', methods=['GET'])
+def getAlunoByIdRoute(id_aluno):
+    try:
+        aluno = getAlunoById(id_aluno)
+        return jsonify(aluno)
+    except AlunoNotFound:
+        return jsonify({"Erro": str(AlunoNotFound)}), 404
+
+# Rotas /professores
 
 @app.route('/professores', methods=['GET'])
 def getProfessores():
     r = dados['professores']
     return jsonify(r)
+
+# Rotas /turmas
 
 @app.route('/turmas', methods=['GET'])
 def getTurmas():
