@@ -1,11 +1,12 @@
 from flask import Flask, jsonify, request
+from datetime import datetime
 
 app = Flask(__name__)
 
 dados = {
-    'alunos':[
+    'alunos': [
         {
-            'id': 1,
+            'id': 0,
             'nome': 'Pedro',
             'idade': 21,
             'turma_id': 1,
@@ -17,7 +18,7 @@ dados = {
     ],
     'professores': [
         {
-            'professor_id': 123,
+            'id': 1,
             'nome': 'Caio',
             'idade': 27,
             'materia': 'Dev API E Micros',
@@ -26,6 +27,7 @@ dados = {
     ],
     'turmas': [
         {
+            'id': 1,
             'turma_id': 12,
             'descricao': 'ADS 3B',
             'ativa': True,
@@ -34,134 +36,207 @@ dados = {
     ]
 }
 
-# Classes para tratativa de exceções ###################################################################################
+idAluno = 1
+idProfessor = 1
 
-class AlunoNotFound(Exception):
-    def _init_(self, msg='Erro, Aluno não identificado ou inexistente!'):
-        self.msg = msg
-        super()._init_(self.msg)
-
-class AlunoExists(Exception):
-    def _init_(self, msg='Erro, Aluno já existente!'):
-        self.msg = msg
-        super()._init_(self.msg)
-
-# Funções para requisições #############################################################################################
-
-def getAlunoById(idAluno):
-    for aluno in dados['alunos']:
-        if aluno['id'] == idAluno:
-            return aluno
-    raise AlunoNotFound()
-
-def alunoAlreadyExists(idAluno):
-    for aluno in dados['alunos']:
-        if aluno['id'] == idAluno:
-            return True
-    return False
-
-def delAlunoById(idAluno):
-    alunos = dados['alunos']
-    for indice, aluno in enumerate(alunos):
-        if aluno['Id'] == idAluno:
-            alunos.pop(indice)
-            return {'Mensagem': 'Aluno deletado com sucesso.'}
-    raise AlunoNotFound()
-
-def chgAluno(id_aluno, nome, idade, turma_id, data_nascimento, nota_semestre_1, nota_semestre_2, media_final):
-    try:
-        for aluno in dados['alunos']:
-            if aluno['Id'] == id_aluno:
-                aluno['nome'] = nome
-                aluno['idade'] = idade
-                aluno['turma_id'] = turma_id
-                aluno['data_nascimento'] = data_nascimento
-                aluno['nota_semestre_1'] = nota_semestre_1
-                aluno['nota_semestre_2'] = nota_semestre_2
-                aluno['media_final'] = media_final
-                return {'Detalhes': 'Aluno atualizado com sucesso!'}, 200
-        raise AlunoNotFound()
-    except Exception:
-        return {'Erro': 'Não foi possível atualizar o aluno', 'Descrição': str(Exception)}, 500
-
-# Rotas ################################################################################################################
-# Alunos #######################################################################
+## ROTAS #######################################################################
+## ALUNO #######################################################################
 
 @app.route('/alunos', methods=['GET'])
-def getAlunosRoute():
-    r = dados['alunos']
-    return jsonify(r)
+def getAlunos():
+    return jsonify(dados['alunos'])
+
+@app.route('/reseta', methods=['POST', 'DELETE'])
+def reseta():
+    dados['alunos'] = []
+    dados['professores'] = []
+    return jsonify({'mensagem': 'Dados resetados'}), 200
+
+@app.route('/alunos', methods=['POST'])
+def criandoAluno():
+    response = request.get_json()
+    if not response or 'nome' not in response:
+        return jsonify({'erro': 'aluno sem nome'}), 400
+
+    aluno = dados['alunos']
+
+    id_aluno = response.get('id', None)
+    if id_aluno:
+        for a in aluno:
+            if a['id'] == id_aluno:
+                return jsonify({'erro': 'id ja utilizada'}), 400
+        response['id'] = id_aluno
+    else:
+        global idAluno
+        response['id'] = idAluno
+        idAluno += 1
+
+    nota1 = float(response.get('nota_primeiro_semestre', 0))
+    nota2 = float(response.get('nota_segundo_semestre', 0))
+    media_final = (nota1 + nota2) / 2
+    response['media_final'] = media_final
+
+    data = response.get('data_nascimento', None)
+    if data:
+        try:
+            data_nasc = datetime.strptime(data, '%d/%m/%Y')
+            data_atual = datetime.today()
+            idade = data_atual.year - data_nasc.year - ((data_atual.month, data_atual.day) < (data_nasc.month, data_nasc.day))
+            response['idade'] = idade
+        except ValueError:
+            response['idade'] = None
+    else:
+        response['idade'] = None
+
+    aluno.append(response)
+    return jsonify(response), 200
+
+
+@app.route('/alunos/<int:idAluno>', methods=['PUT'])
+def updateAluno(idAluno):
+    alunos = dados['alunos']
+    for aluno in alunos:
+        if aluno.get('id') == idAluno:
+            response = request.get_json()
+            if not response or 'nome' not in response:
+                return jsonify({'erro': 'aluno sem nome'}), 400
+            aluno['nome'] = response['nome']
+            return jsonify(aluno), 200
+    return jsonify({'erro': 'aluno nao encontrado'}), 400
+
 
 @app.route('/alunos/<int:idAluno>', methods=['GET'])
-def getAlunoByIdRoute(idAluno):
-    try:
-        aluno = getAlunoById(idAluno)
-        return jsonify(aluno)
-    except AlunoNotFound:
-        return jsonify({'Erro': str(AlunoNotFound)}), 404
-    
-@app.route('/alunos', methods=['POST'])
-def addAlunoRoute():
-    alunoNovo = request.json
-    alunoNovo['id'] = int(alunoNovo['id'])
-    alunoNovo['turma_id'] = int(alunoNovo['turma_id'])
+def getAlunoId(idAluno):
+    alunos = dados['alunos']
+    for aluno in alunos:
+        if aluno.get('id') == idAluno:
+            return jsonify(aluno)
+    return jsonify({'erro': 'aluno nao encontrado'}), 400
 
-    try:
-        if alunoAlreadyExists(alunoNovo['Id']):
-            raise AlunoExists()
-        dados['alunos'].append(alunoNovo)
-        return jsonify({'mensagem': 'Aluno criado com sucesso!', 'aluno': alunoNovo}), 201
-    except AlunoExists:
-        return jsonify({'Erro': str(AlunoExists)}), 400
-    
-@app.route('/alunos/deletar/<int:idAluno>', methods=['DELETE'])
-def delAlunoRoute(idAluno):
-    try:
-        r = delAlunoById(idAluno)
-        return jsonify(r), 200
-    except AlunoNotFound:
-        return jsonify({'Erro': str(AlunoNotFound)}), 404
-    
-@app.route('/alunos/<int:idAluno>', methods=['PUT'])
-def chgAlunoRoute(idAluno):
-    aluno = request.json
-    if not aluno:
-        return jsonify({
-            'Erro': 'Requisição inválida',
-            'Descrição': 'O corpo da requisição está vazio, preencha todos os campos'
-        }), 400
-    try:
-        resultado, status_code = chgAluno(
-            idAluno,
-            aluno.get('nome'),
-            aluno.get('idade'),
-            aluno.get('turma_Id'),
-            aluno.get('data_nascimento'),
-            aluno.get('nota_semestre_1'),
-            aluno.get('nota_semestre_2'),
-            aluno.get('media_final')
-        )
-        return jsonify(resultado), status_code
-    except AlunoNotFound:
-        return jsonify({'Erro': str(AlunoNotFound)}), 404
-    except Exception:
-        return jsonify({'Erro': 'Falha ao atualizar aluno', 'Detalhes': str(Exception)}), 500
 
-# Professores ##################################################################
+@app.route('/alunos/<int:idAluno>', methods=['DELETE'])
+def deletandoAluno(idAluno):
+    alunos = dados['alunos']
+    for aluno in alunos:
+        if aluno.get('id') == idAluno:
+            alunos.remove(aluno)
+            return jsonify({'mensagem': 'Aluno deletado'}), 200
+    return jsonify({'erro': 'aluno nao encontrado'}), 400
+
+
+## PROFESSOR ###################################################################
 
 @app.route('/professores', methods=['GET'])
-def getProfessores():
-    r = dados['professores']
-    return jsonify(r)
+def getProfessor():
+    return jsonify(dados['professores'])
 
-# Turmas #######################################################################
+@app.route('/professores', methods=['POST'])
+def criandoProfessor():
+    response = request.get_json()
+    if not response or 'nome' not in response:
+        return jsonify({'erro': 'professor sem nome'}), 400
+    professor = dados['professores']
+
+    id_professor = response.get('id', None)
+    if id_professor:
+        for a in professor:
+            if a['id'] == id_professor:
+                return jsonify({'erro': 'id ja utilizada'}), 400
+        response['id'] = id_professor
+    else:
+        global idProfessor
+        response['id'] = idProfessor
+        idProfessor += 1
+
+    data = response.get('data_nascimento', None)
+    if data:
+        try:
+            data_nasc = datetime.strptime(data, '%d/%m/%Y')
+            data_atual = datetime.today()
+            idade = data_atual.year - data_nasc.year - ((data_atual.month, data_atual.day) < (data_nasc.month, data_nasc.day))
+            response['idade'] = idade
+        except ValueError:
+            response['idade'] = None
+    else:
+        response['idade'] = None
+
+    professor.append(response)
+    return jsonify(response), 200
+
+@app.route('/professores/<int:idProfessor>', methods=['GET'])
+def getProfessorId(idProfessor):
+    professores = dados['professores']
+    for professor in professores:
+        if professor.get('id') == idProfessor:
+            return jsonify(professor)
+    return jsonify({'erro': 'professor nao encontrado'}), 400
+
+@app.route('/professores/<int:idProfessor>', methods=['PUT'])
+def atualizandoProfessor(idProfessor):
+    professores = dados['professores']
+    for professor in professores:
+        if professor.get('id') == idProfessor:
+            response = request.get_json()
+            if not response or 'nome' not in response:
+                return jsonify({'erro': 'professor sem nome'}), 400
+            professor['nome'] = response['nome']
+            return jsonify(response), 200
+    return jsonify({'erro': 'professor nao encontrado'}), 400
+
+@app.route('/professores/<int:idProfessor>', methods=['DELETE'])
+def deletandoProfessor(idProfessor):
+    professores = dados['professores']
+    for professor in professores:
+        if professor.get('id') == idProfessor:  # Use get()
+            professores.remove(professor)
+            return jsonify({'mensagem': 'Professor deletado'}), 200
+    return jsonify({'erro': 'professor nao encontrado'}), 400
+
+## TURMA #######################################################################
 
 @app.route('/turmas', methods=['GET'])
-def getTurmas():
-    r = dados['turmas']
-    return jsonify(r)
+def getTurma():
+    return jsonify(dados['turmas'])
 
-########################################################################################################################
+
+@app.route('/turmas', methods=['POST'])
+def criandoTurma():
+    response = request.get_json()
+    turma = dados['turmas']
+
+    response['id'] = len(turma) + 1 #start from 1
+
+    turma.append(response)
+    return jsonify(response),200 #Just return the new object
+
+@app.route('/turmas/<int:idTurma>', methods=['GET'])
+def getTurmaId(idTurma):
+    turmas = dados['turmas']
+    for turma in turmas:
+        if turma.get('id') == idTurma: #Use get()
+            return jsonify(turma)
+    return jsonify({'mensagem':'Turma não encontrada'}), 400 #Add status code
+
+@app.route('/turmas/<int:idTurma>', methods=['PUT'])
+def atualizandoTurmas(idTurma):
+    turmas = dados['turmas']
+    for turma in turmas:
+        if turma.get('id') == idTurma: #Use get()
+            response = request.get_json()
+            if not response or 'nome' not in response:
+                return jsonify({'erro': 'turma sem nome'}), 400
+            turma['nome'] = response['nome']
+            return jsonify(response), 200
+    return jsonify({'mensagem':'Turma não encontrada'}), 400 #Add status code
+
+@app.route('/turmas/<int:idTurma>', methods=['DELETE'])
+def deletandoTurma(idTurma):
+    turmas = dados['turmas']
+    for turma in turmas:
+        if turma.get('id') == idTurma:  # Use get()
+            turmas.remove(turma)
+            return jsonify({'mensagem': 'Turma deletada'}), 200
+    return jsonify({'mensagem': 'Turma não encontrada'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
