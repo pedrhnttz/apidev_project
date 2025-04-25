@@ -1,14 +1,12 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 
-from .professores_model import getProfessor, criandoProfessor, getProfessorId, atualizandoProfessor, deletandoProfessor
+from .professores_model import get_professores, criandoProfessor, getProfessorId, atualizandoProfessor, deletandoProfessor
 
 professores_bp = Blueprint('professores', __name__)
 
-idProfessor = 1
-
 @professores_bp.route('/professores', methods=['GET'])
-def getProfessorRoute():
-    return getProfessor()
+def getProfessores():
+    return jsonify(get_professores())
 
 @professores_bp.route('/professores', methods=['POST'])
 def criandoProfessorRoute():

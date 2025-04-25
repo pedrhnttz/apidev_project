@@ -1,4 +1,3 @@
-from flask import jsonify, request
 from datetime import datetime
 
 dados = {
@@ -6,16 +5,20 @@ dados = {
         {
             'id': 1,
             'nome': 'Caio',
-            'idade': 27,
             'materia': 'Desenvolvimento de APIs E Microsserviços',
-            'obs': None
+            'obs': 'Especialista em Microsserviços'
         }
     ]
 }
 
+# Classes de exceções
 
-def getProfessor():
-    return jsonify(dados['professores'])
+
+
+# Funções de rota
+
+def get_professores():
+    return dados['professores']
 
 def criandoProfessor(response):
     global idProfessor
