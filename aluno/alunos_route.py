@@ -18,8 +18,12 @@ def getAlunoById(idAluno):
 
 @alunos_bp.route('/alunos', methods=['POST'])
 def createAluno():
-    response = request.get_json()
-    return jsonify(create_aluno(response))
+    try:
+        data = request.json
+        create_aluno(data)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'erro': str(e)})
 
 @alunos_bp.route('/alunos/<int:idAluno>', methods=['PUT'])
 def updateAluno(idAluno):

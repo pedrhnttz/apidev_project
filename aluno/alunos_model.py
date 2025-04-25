@@ -8,14 +8,14 @@ dados = {
             'idade': 21,
             'turma_id': 12,
             'data_nascimento': '26/01/2004',
-            'nota_semestre_1': 10.0,
-            'nota_semestre_2': 8.0,
+            'nota_primeiro_semestre': 10.0,
+            'nota_segundo_semestre': 8.0,
             'media_final': 9.0
         }
     ]
 }
 
-idAluno = 1
+idAluno = 0
 
 # Exceções
 
@@ -23,56 +23,33 @@ class AlunoNotFound(Exception):
     def __init__(self):
         super().__init__({'Aluno não encontrado'})
 
-# Funções
+# Funções de rota
 
 def  get_alunos():
     return dados['alunos']
 
 def get_aluno_by_id(idAluno):
-    global dados
-    for aluno in dados['alunos']:
+    alunos = dados['alunos']
+    for aluno in alunos:
         if aluno.get('id') == idAluno:
             return aluno
     raise AlunoNotFound
 
-def create_aluno(response):
-    global idAluno, dados
-    if not response or 'nome' not in response:
-        resposta = {'erro': 'aluno sem nome'}
-        return resposta, 400
+def create_aluno(aluno):
 
-    aluno = dados['alunos']
+    if not aluno or 'nome' not in aluno: # Validar nome
+        raise Exception('Aluno/Nome inválido')
 
-    id_aluno = response.get('id', None)
-    if id_aluno:
-        for a in aluno:
-            if a['id'] == id_aluno:
-                resposta = {'erro': 'id ja utilizada'}
-                return resposta, 400
-        response['id'] = id_aluno
-    else:
-        response['id'] = idAluno
-        idAluno += 1
+    aluno['id'] = create_id(aluno)
+    aluno['nota_primeiro_semestre'] = float(aluno.get('nota_primeiro_semestre', 0))
+    aluno['nota_segundo_semestre'] = float(aluno.get('nota_segundo_semestre', 0))
+    aluno['media_final'] = create_media_final(aluno['nota_primeiro_semestre'], aluno['nota_segundo_semestre'])
+    aluno['turma_id'] = float(aluno.get('turma_id', 0))
 
-    nota1 = float(response.get('nota_primeiro_semestre', 0))
-    nota2 = float(response.get('nota_segundo_semestre', 0))
-    media_final = (nota1 + nota2) / 2
-    response['media_final'] = media_final
+    aluno['data_nascimento'] = aluno.get('data_nascimento', None)
+    aluno['idade'] = create_idade(aluno['data_nascimento'])
 
-    data = response.get('data_nascimento', None)
-    if data:
-        try:
-            data_nasc = datetime.strptime(data, '%d/%m/%Y')
-            data_atual = datetime.today()
-            idade = data_atual.year - data_nasc.year - ((data_atual.month, data_atual.day) < (data_nasc.month, data_nasc.day))
-            response['idade'] = idade
-        except ValueError:
-            response['idade'] = None
-    else:
-        response['idade'] = None
-
-    aluno.append(response)
-    return response, 200
+    dados['alunos'].append(aluno)
 
 def update_aluno(idAluno, response):
     alunos = dados['alunos']
@@ -95,3 +72,35 @@ def delete_aluno(idAluno):
             return resposta, 200
     resposta = {'erro': 'aluno nao encontrado'}
     return resposta, 400
+
+# Funções secundárias
+
+def create_id(aluno):
+    global idAluno
+    alunos = dados['alunos']
+    id_aluno = aluno.get('id', None)
+    if id_aluno:
+        for a in alunos:
+            if a['id'] == id_aluno:
+                raise Exception('Este ID já está sendo utilizado')
+        return id_aluno
+    else:
+        idAluno += 1
+        return idAluno
+    
+def create_media_final(n1, n2):
+    media = (n1 + n2) / 2
+    media_format = f"{media:.1f}"
+    return media_format
+
+def create_idade(data_nascimento):
+    if data_nascimento:
+        try:
+            data_nasc = datetime.strptime(data_nascimento, '%d/%m/%Y')
+            data_atual = datetime.today()
+            idade = int(data_atual.year - data_nasc.year - ((data_atual.month, data_atual.day) < (data_nasc.month, data_nasc.day)))
+            return idade
+        except ValueError:
+            return None
+    else:
+        return None
