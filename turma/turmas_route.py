@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from turmas_model import getTurma, criandoTurma, getTurmaId, atualizandoTurmas, deletandoTurma
+from .turmas_model import getTurma, criandoTurma, getTurmaId, atualizandoTurmas, deletandoTurma
 
 turmas_bp = Blueprint('turmas', __name__)
 

@@ -1,4 +1,3 @@
-from flask import jsonify, request
 from datetime import datetime
 
 dados = {
@@ -18,13 +17,29 @@ dados = {
 
 idAluno = 1
 
-def  getAlunos():
-    return jsonify(dados['alunos'])
+# Exceções
 
-def criandoAluno(response):
-    global idAluno
+class AlunoNotFound(Exception):
+    def __init__(self):
+        super().__init__({'Aluno não encontrado'})
+
+# Funções
+
+def  get_alunos():
+    return dados['alunos']
+
+def get_aluno_by_id(idAluno):
+    global dados
+    for aluno in dados['alunos']:
+        if aluno.get('id') == idAluno:
+            return aluno
+    raise AlunoNotFound
+
+def create_aluno(response):
+    global idAluno, dados
     if not response or 'nome' not in response:
-        return jsonify({'erro': 'aluno sem nome'}), 400
+        resposta = {'erro': 'aluno sem nome'}
+        return resposta, 400
 
     aluno = dados['alunos']
 
@@ -32,7 +47,8 @@ def criandoAluno(response):
     if id_aluno:
         for a in aluno:
             if a['id'] == id_aluno:
-                return jsonify({'erro': 'id ja utilizada'}), 400
+                resposta = {'erro': 'id ja utilizada'}
+                return resposta, 400
         response['id'] = id_aluno
     else:
         response['id'] = idAluno
@@ -56,29 +72,26 @@ def criandoAluno(response):
         response['idade'] = None
 
     aluno.append(response)
-    return jsonify(response), 200
+    return response, 200
 
-def updateAluno(idAluno, response):
+def update_aluno(idAluno, response):
     alunos = dados['alunos']
     for aluno in alunos:
         if aluno.get('id') == idAluno:
             if not response or 'nome' not in response:
-                return jsonify({'erro': 'aluno sem nome'}), 400
+                resposta = {'erro': 'aluno sem nome'}
+                return resposta, 400
             aluno['nome'] = response['nome']
-            return jsonify(aluno), 200
-    return jsonify({'erro': 'aluno nao encontrado'}), 400
+            return aluno, 200
+    resposta = {'erro': 'aluno nao encontrado'}
+    return resposta, 400
 
-def getAlunoId(idAluno):
-    alunos = dados['alunos']
-    for aluno in alunos:
-        if aluno.get('id') == idAluno:
-            return jsonify(aluno)
-    return jsonify({'erro': 'aluno nao encontrado'}), 400
-
-def deletandoAluno(idAluno):
+def delete_aluno(idAluno):
     alunos = dados['alunos']
     for aluno in alunos:
         if aluno.get('id') == idAluno:
             alunos.remove(aluno)
-            return jsonify({'mensagem': 'Aluno deletado'}), 200
-    return jsonify({'erro': 'aluno nao encontrado'}), 400
+            resposta = {'mensagem': 'Aluno deletado'}
+            return resposta, 200
+    resposta = {'erro': 'aluno nao encontrado'}
+    return resposta, 400

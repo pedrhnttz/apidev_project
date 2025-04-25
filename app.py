@@ -1,4 +1,3 @@
-from flask import Flask, jsonify # type: ignore
 from config import app
 from aluno.alunos_route import alunos_bp
 from professor.professores_route import professores_bp

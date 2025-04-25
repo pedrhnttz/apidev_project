@@ -1,27 +1,31 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 
-from .alunos_model import getAlunos, criandoAluno, updateAluno, getAlunoId, deletandoAluno
+from .alunos_model import get_alunos, get_aluno_by_id, create_aluno, update_aluno, delete_aluno, AlunoNotFound
 
 alunos_bp = Blueprint('alunos', __name__)
 
 @alunos_bp.route('/alunos', methods=['GET'])
-def getAlunosRoute():
-    return getAlunos()
-
-@alunos_bp.route('/alunos', methods=['POST'])
-def criandoAlunoRoute():
-    response = request.get_json()
-    return criandoAluno(response)
-
-@alunos_bp.route('/alunos/<int:idAluno>', methods=['PUT'])
-def updateAlunoRoute(idAluno):
-    response = request.get_json()
-    return updateAluno(idAluno, response)
+def getAlunos():
+    return jsonify(get_alunos())
 
 @alunos_bp.route('/alunos/<int:idAluno>', methods=['GET'])
-def getAlunoIdRoute(idAluno):
-    return getAlunoId(idAluno)
+def getAlunoById(idAluno):
+    try:
+        aluno = get_aluno_by_id(idAluno)
+        return jsonify(aluno), 200
+    except AlunoNotFound as e:
+        return jsonify({'erro': str(e)}), 404
+
+@alunos_bp.route('/alunos', methods=['POST'])
+def createAluno():
+    response = request.get_json()
+    return jsonify(create_aluno(response))
+
+@alunos_bp.route('/alunos/<int:idAluno>', methods=['PUT'])
+def updateAluno(idAluno):
+    response = request.get_json()
+    return jsonify(update_aluno(idAluno, response))
 
 @alunos_bp.route('/alunos/<int:idAluno>', methods=['DELETE'])
-def deletandoAlunoRoute(idAluno):
-    return deletandoAluno(idAluno)
+def deleteAluno(idAluno):
+    return jsonify(delete_aluno(idAluno))
