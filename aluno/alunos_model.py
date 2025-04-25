@@ -37,10 +37,8 @@ def get_aluno_by_id(idAluno):
 
 def create_aluno(aluno):
 
-    if not aluno or 'nome' not in aluno: # Validar nome
-        raise Exception('Aluno/Nome inválido')
-
-    aluno['id'] = create_id(aluno)
+    aluno['nome'] = create_nome(aluno)
+    aluno['id'] = create_id(aluno.get('id', None))
     aluno['nota_primeiro_semestre'] = float(aluno.get('nota_primeiro_semestre', 0))
     aluno['nota_segundo_semestre'] = float(aluno.get('nota_segundo_semestre', 0))
     aluno['media_final'] = create_media_final(aluno['nota_primeiro_semestre'], aluno['nota_segundo_semestre'])
@@ -50,35 +48,45 @@ def create_aluno(aluno):
     aluno['idade'] = create_idade(aluno['data_nascimento'])
 
     dados['alunos'].append(aluno)
+    return {'msg': 'Aluno criado!'}
 
-def update_aluno(idAluno, response):
+def update_aluno(aluno_id, aluno_up):
+    aluno = get_aluno_by_id(aluno_id)
+
+    aluno_up['nome'] = create_nome(aluno_up)
+    aluno_up['nota_primeiro_semestre'] = float(aluno_up.get('nota_primeiro_semestre', 0))
+    aluno_up['nota_segundo_semestre'] = float(aluno_up.get('nota_segundo_semestre', 0))
+    aluno_up['media_final'] = create_media_final(aluno_up['nota_primeiro_semestre'], aluno_up['nota_segundo_semestre'])
+    aluno_up['turma_id'] = float(aluno_up.get('turma_id', 0))
+
+    aluno_up['data_nascimento'] = aluno_up.get('data_nascimento', None)
+    aluno_up['idade'] = create_idade(aluno_up['data_nascimento'])
+
+    aluno.update(aluno_up)
+    return {'msg': 'Aluno atualizado!'}
+    
+
+def delete_aluno(aluno_id):
     alunos = dados['alunos']
-    for aluno in alunos:
-        if aluno.get('id') == idAluno:
-            if not response or 'nome' not in response:
-                resposta = {'erro': 'aluno sem nome'}
-                return resposta, 400
-            aluno['nome'] = response['nome']
-            return aluno, 200
-    resposta = {'erro': 'aluno nao encontrado'}
-    return resposta, 400
+    aluno = get_aluno_by_id(aluno_id)
 
-def delete_aluno(idAluno):
-    alunos = dados['alunos']
-    for aluno in alunos:
-        if aluno.get('id') == idAluno:
-            alunos.remove(aluno)
-            resposta = {'mensagem': 'Aluno deletado'}
-            return resposta, 200
-    resposta = {'erro': 'aluno nao encontrado'}
-    return resposta, 400
+    alunos.remove(aluno)
 
-# Funções secundárias
+    if aluno not in alunos:
+        return {'msg': 'Aluno deletado!'}
+    raise Exception('Não foi possível deletar o aluno')
 
-def create_id(aluno):
+# Funções de lógica
+
+def create_nome(aluno):
+    if not aluno or 'nome' not in aluno:
+        raise Exception('Aluno/Nome inválido')
+    nome = aluno.get('nome')
+    return nome
+
+def create_id(id_aluno):
     global idAluno
     alunos = dados['alunos']
-    id_aluno = aluno.get('id', None)
     if id_aluno:
         for a in alunos:
             if a['id'] == id_aluno:
@@ -99,7 +107,9 @@ def create_idade(data_nascimento):
             data_nasc = datetime.strptime(data_nascimento, '%d/%m/%Y')
             data_atual = datetime.today()
             idade = int(data_atual.year - data_nasc.year - ((data_atual.month, data_atual.day) < (data_nasc.month, data_nasc.day)))
-            return idade
+            if idade >= 18:
+                return idade
+            raise Exception('Aluno não possui idade suficiente')
         except ValueError:
             return None
     else:

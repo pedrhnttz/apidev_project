@@ -8,10 +8,10 @@ alunos_bp = Blueprint('alunos', __name__)
 def getAlunos():
     return jsonify(get_alunos())
 
-@alunos_bp.route('/alunos/<int:idAluno>', methods=['GET'])
-def getAlunoById(idAluno):
+@alunos_bp.route('/alunos/<int:id>', methods=['GET'])
+def getAlunoById(id):
     try:
-        aluno = get_aluno_by_id(idAluno)
+        aluno = get_aluno_by_id(id)
         return jsonify(aluno), 200
     except AlunoNotFound as e:
         return jsonify({'erro': str(e)}), 404
@@ -20,16 +20,24 @@ def getAlunoById(idAluno):
 def createAluno():
     try:
         data = request.json
-        create_aluno(data)
-        return jsonify(data)
+        aluno = create_aluno(data)
+        return jsonify(aluno)
     except Exception as e:
         return jsonify({'erro': str(e)})
 
-@alunos_bp.route('/alunos/<int:idAluno>', methods=['PUT'])
-def updateAluno(idAluno):
-    response = request.get_json()
-    return jsonify(update_aluno(idAluno, response))
+@alunos_bp.route('/alunos/<int:id>', methods=['PUT'])
+def updateAluno(id):
+    try:
+        dados_up = request.get_json()
+        aluno_up = update_aluno(id, dados_up)
+        return jsonify(aluno_up), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)})
 
-@alunos_bp.route('/alunos/<int:idAluno>', methods=['DELETE'])
-def deleteAluno(idAluno):
-    return jsonify(delete_aluno(idAluno))
+@alunos_bp.route('/alunos/<int:id>', methods=['DELETE'])
+def deleteAluno(id):
+    try:
+        aluno_rm = delete_aluno(id)
+        return jsonify(aluno_rm)
+    except Exception as e:
+        return jsonify({'erro': str(e)})
