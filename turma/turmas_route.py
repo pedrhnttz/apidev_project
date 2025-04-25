@@ -1,26 +1,29 @@
-from flask import Blueprint, request
-from .turmas_model import getTurma, criandoTurma, getTurmaId, atualizandoTurmas, deletandoTurma
+from flask import Blueprint, request, jsonify
+
+from .turmas_model import get_turmas, get_turma_by_id, create_turma, update_turma, delete_turma
 
 turmas_bp = Blueprint('turmas', __name__)
 
 @turmas_bp.route('/turmas', methods=['GET'])
 def getTurmaRoute():
-    return getTurma()
+    return jsonify(get_turmas())
+
+@turmas_bp.route('/turmas/<int:id>', methods=['GET'])
+def getTurmaIdRoute(id):
+    try:
+        turma = get_turma_by_id(id)
+        return jsonify(turma)
+    except Exception as e:
+        return jsonify({'erro': str(e)})
 
 @turmas_bp.route('/turmas', methods=['POST'])
 def criandoTurmaRoute():
-    response = request.get_json()
-    return criandoTurma(response)
+    pass
 
-@turmas_bp.route('/turmas/<int:idTurma>', methods=['GET'])
-def getTurmaIdRoute(idTurma):
-    return getTurmaId(idTurma)
+@turmas_bp.route('/turmas/<int:id>', methods=['PUT'])
+def atualizandoTurmasRoute(id):
+    pass
 
-@turmas_bp.route('/turmas/<int:idTurma>', methods=['PUT'])
-def atualizandoTurmasRoute(idTurma):
-    respose = request.get_json()
-    return atualizandoTurmas(idTurma, respose)
-
-@turmas_bp.route('/turmas/<int:idTurma>', methods=['DELETE'])
-def deletandoTurmaRoute(idTurma):
-    return deletandoTurma(idTurma)
+@turmas_bp.route('/turmas/<int:id>', methods=['DELETE'])
+def deletandoTurmaRoute(id):
+    pass

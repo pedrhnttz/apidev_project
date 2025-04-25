@@ -1,47 +1,71 @@
-from flask import jsonify, request
-
 dados = {
     'turmas': [
         {
-            'id': 1,
-            'turma_id': 12,
-            'descricao': 'ADS 3B',
-            'ativa': True,
-            'professor_id': 123
+            'id': 0,
+            'nome': 'ADS 3B Noite',
+            'materia': 'Análise e Desenvolvimento de Sistemas',
+            'descricao': None,
+            'ativo': None,
+            'professor_id': None
         }
     ]
 }
 
-def getTurma():
-    return jsonify(dados['turmas'])
+IdTurma = 0
 
-def criandoTurma(response):
-    turma = dados['turmas']
-    response['id'] = len(turma) + 1
-    turma.append(response)
-    return jsonify(response),200
+# Funções de rota
 
-def getTurmaId(idTurma):
+def get_turmas():
+    return dados['turmas']
+
+def get_turma_by_id(turma_id):
     turmas = dados['turmas']
     for turma in turmas:
-        if turma.get('id') == idTurma:
-            return jsonify(turma)
-    return jsonify({'mensagem':'Turma não encontrada'}), 400
+        if turma.get('id') == turma_id:
+            return turma
+    raise Exception('Turma não encontrada')
 
-def atualizandoTurmas(idTurma, response):
-    turmas = dados['turmas']
-    for turma in turmas:
-        if turma.get('id') == idTurma:
-            if not response or 'nome' not in response:
-                return jsonify({'erro': 'turma sem nome'}), 400
-            turma['nome'] = response['nome']
-            return jsonify(response), 200
-    return jsonify({'mensagem':'Turma não encontrada'}), 400 
+def create_turma(turma):
+    
+    turma['nome'] = create_nome(turma)
+    turma['materia'] = create_materia(turma.get('materia'))
 
-def deletandoTurma(idTurma):
+    turma['id'] = create_id(turma.get('id'))
+
+    turma['descricao'] = turma.get('descricao', None)
+    turma['ativo'] = bool(turma.get('ativo', None))
+    turma['professo_id'] = int(turma.get('professor_id', None))
+
+    dados['turmas'].append(turma)
+    return {'msg': 'Turma criada!'}
+
+def update_turma(idTurma, response):
+    pass
+
+def delete_turma(idTurma):
+    pass
+
+# Funções de lógica
+
+def create_nome(turma):
+    if not turma or 'nome' not in turma:
+        raise Exception('Turma/Nome inválido')
+    nome = turma.get('nome')
+    return nome
+
+def create_materia(materia):
+    if not materia:
+        raise Exception('Materia Invalida')
+    return materia
+
+def create_id(turma_id):
+    global IdTurma
     turmas = dados['turmas']
-    for turma in turmas:
-        if turma.get('id') == idTurma:
-            turmas.remove(turma)
-            return jsonify({'mensagem': 'Turma deletada'}), 200
-    return jsonify({'mensagem': 'Turma não encontrada'}), 404
+    if turma_id:
+        for turma in turmas:
+            if turma['id'] == turma_id:
+                raise Exception('Este ID já está sendo utilizado')
+        return turma_id
+    else:
+        IdTurma += 1
+        return IdTurma
