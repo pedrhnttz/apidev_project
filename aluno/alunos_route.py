@@ -13,7 +13,7 @@ def getAlunoById(id):
     try:
         aluno = get_aluno_by_id(id)
         return jsonify(aluno), 200
-    except AlunoNotFound as e:
+    except Exception as e:
         return jsonify({'erro': str(e)}), 404
 
 @alunos_bp.route('/alunos', methods=['POST'])

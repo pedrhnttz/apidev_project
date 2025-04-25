@@ -17,21 +17,37 @@ dados = {
 
 idAluno = 0
 
-# Exceções
+# Classes de exceções
 
 class AlunoNotFound(Exception):
     def __init__(self):
         super().__init__({'Aluno não encontrado'})
+
+class AlunoInvalid(Exception):
+    def __init__(self):
+        super().__init__({'Aluno/Nome inválido'})
+
+class IdAlreadyExists(Exception):
+    def __init__(self):
+        super().__init__({'Este ID já está sendo utilizado'})
+
+class AlunoUnderage(Exception):
+    def __init__(self):
+        super().__init__({'Aluno não possui idade necessária'})
+
+class AlunoDeleteError(Exception):
+    def __init__(self):
+        super().__init__({'Não foi possível excluir o aluno'})
 
 # Funções de rota
 
 def  get_alunos():
     return dados['alunos']
 
-def get_aluno_by_id(idAluno):
+def get_aluno_by_id(id_aluno):
     alunos = dados['alunos']
     for aluno in alunos:
-        if aluno.get('id') == idAluno:
+        if aluno.get('id') == id_aluno:
             return aluno
     raise AlunoNotFound
 
@@ -74,13 +90,13 @@ def delete_aluno(aluno_id):
 
     if aluno not in alunos:
         return {'msg': 'Aluno deletado!'}
-    raise Exception('Não foi possível deletar o aluno')
+    raise AlunoDeleteError
 
 # Funções de lógica
 
 def create_nome(aluno):
     if not aluno or 'nome' not in aluno:
-        raise Exception('Aluno/Nome inválido')
+        raise AlunoInvalid
     nome = aluno.get('nome')
     return nome
 
@@ -90,7 +106,7 @@ def create_id(id_aluno):
     if id_aluno:
         for a in alunos:
             if a['id'] == id_aluno:
-                raise Exception('Este ID já está sendo utilizado')
+                raise IdAlreadyExists
         return id_aluno
     else:
         idAluno += 1
@@ -109,7 +125,7 @@ def create_idade(data_nascimento):
             idade = int(data_atual.year - data_nasc.year - ((data_atual.month, data_atual.day) < (data_nasc.month, data_nasc.day)))
             if idade >= 18:
                 return idade
-            raise Exception('Aluno não possui idade suficiente')
+            raise AlunoUnderage
         except ValueError:
             return None
     else:
