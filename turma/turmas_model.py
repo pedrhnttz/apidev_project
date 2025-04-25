@@ -39,11 +39,29 @@ def create_turma(turma):
     dados['turmas'].append(turma)
     return {'msg': 'Turma criada!'}
 
-def update_turma(idTurma, response):
-    pass
+def update_turma(turma_id, turma_up):
+    turma = get_turma_by_id(turma_id)
 
-def delete_turma(idTurma):
-    pass
+    turma_up['nome'] = create_nome(turma_up)
+    turma_up['materia'] = create_materia(turma_up.get('materia'))
+
+    turma_up['descricao'] = turma_up.get('descricao', None)
+    turma_up['ativo'] = bool(turma_up.get('ativo', None))
+    turma_up['professo_id'] = int(turma_up.get('professor_id', None))
+
+    turma.update(turma_up)
+    return {'msg': 'Turma atualizada!'}
+
+def delete_turma(turma_id):
+
+    turmas = dados['turmas']
+    turma = get_turma_by_id(turma_id)
+
+    turmas.remove(turma)
+
+    if turma not in turmas:
+        return {'msg': 'Turma deletada!'}
+    raise Exception('Não foi possível deletar a turma')
 
 # Funções de lógica
 
