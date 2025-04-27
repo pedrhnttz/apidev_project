@@ -101,6 +101,20 @@ def create_aluno(aluno):
     db.session.commit()
 
     return jsonify(aluno), 200
+
+def update_aluno(aluno_id, responseUpdate):
+    aluno = Aluno.query.get(aluno_id)
+    if not aluno:
+        pass
+    aluno.nome = responseUpdate['nome']
+    aluno.turma_id = responseUpdate['turma_id']
+    aluno.data_nascimento = responseUpdate['data_nascimento']
+    aluno.nota_semestre_1 = responseUpdate['nota_semestre_1']
+    aluno.nota_semestre_2 = responseUpdate['nota_semestre_2']
+    aluno.media_final = aluno.calcularMedia()
+    aluno.idade = aluno.calcularIdade()
+    db.session.commit()
+    return {'msg': 'Aluno atualizado!'}
     
 
 def delete_aluno(aluno_id):

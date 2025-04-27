@@ -85,7 +85,7 @@ def update_professor(id_professor, professor_up):
     professor.data_nascimento = professor_up['data_nascimento']
     professor.salario = professor_up['salario']
     professor.idade = professor.calcularIdade()
-
+    db.session.commit()
     return {'msg': 'Professor atualizado!'}
 
 def delete_professor(professor_id):
