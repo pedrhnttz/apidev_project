@@ -36,7 +36,7 @@ class TurmaInvalid(Exception):
 
 # Funções de rota
 
-def getTurma():
+def get_turmas():
     turmas = Turma.query.all()
     return [turma.to_dict() for turma in turmas]
 
