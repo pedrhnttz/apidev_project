@@ -14,6 +14,7 @@ professor_input_model = professores_ns.model("ProfessorInput",{
 professor_output_model = professores_ns.model("ProfessorOutput", {
     "id": fields.Integer(description="ID do professor"),
     "nome": fields.String(description="Nome do professor"),
+    "disciplina": fields.String(description="Disciplina ministrada"),
     "idade": fields.Integer(description="Idade do professor"),
     "data_nascimento": fields.String(description="Data de nascimento (YYYY-MM-DD)"),
     "salario": fields.Float(description="Salário professor")
