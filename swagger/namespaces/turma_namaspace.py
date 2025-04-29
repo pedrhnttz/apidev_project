@@ -1,13 +1,3 @@
-"""	
-Example Value
-Model
-{
-  "nome": "string",
-  "materia": "string",
-  "descricao": 0,
-  "ativo": 0,
-  "professor_id": 0
-}"""
 from flask_restx import Namespace, Resource, fields
 from turma.turmas_model import get_turmas, get_turma_by_id, create_turma, update_turma, delete_turma
 
