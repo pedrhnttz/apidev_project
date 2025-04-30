@@ -61,16 +61,13 @@ def get_professor_by_id(id_professor):
 def create_professor(professor):
     if not professor or 'nome' not in professor:
         return jsonify({'erro': 'professor sem nome'}), 400
-    data_nascimento_str = professor.get('data_nascimento')
-    data_nascimento = datetime.strptime(data_nascimento_str, '%Y-%m-%d').date()
 
     novo_professor = Professor(
         nome = professor['nome'],
         disciplina = professor['disciplina'],
-        data_nascimento = data_nascimento,
+        data_nascimento = datetime.strptime(professor['data_nascimento'], "%Y-%m-%d").date(),
         salario = professor['salario']
     )
-    novo_professor.idade = novo_professor.calcularIdade()
     db.session.add(novo_professor)
     db.session.commit()
 

@@ -7,7 +7,7 @@ from config import db
 class Aluno(db.Model):
     __tablename__ = "alunos"
 
-    id = db.Column(db.Integer, primary_key = True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key = True)
     nome = db.Column(db.String(100), nullable = False)
     idade = db.Column(db.Integer, nullable = False)
     data_nascimento = db.Column(db.Date, nullable = False)
@@ -17,14 +17,14 @@ class Aluno(db.Model):
 
     turma_id = db.Column(db.Integer, nullable = False)
 
-    def __init__(self,nome,idade,turma_id,data_nascimento,nota_semestre_1,nota_semestre_2,media_final):
+    def __init__(self,nome,turma_id,data_nascimento,nota_semestre_1,nota_semestre_2):
         self.nome = nome
-        self.idade = idade
         self.turma_id = turma_id
         self.data_nascimento = data_nascimento
         self.nota_semestre_1 = nota_semestre_1
         self.nota_semestre_2 = nota_semestre_2
-        self.media_final = media_final
+        self.idade = self.calcularIdade()
+        self.media_final = self.calcularMedia()
     
     def to_dict(self):
         return {
@@ -85,22 +85,17 @@ def get_aluno_by_id(id_aluno):
 def create_aluno(aluno):
     if not aluno or 'nome' not in aluno:
         return jsonify({'erro': 'aluno sem nome'}), 400
-    data_nascimento_str = aluno.get('data_nascimento')
-    data_nascimento = datetime.strptime(data_nascimento_str, '%Y-%m-%d').date()
-
     novo_aluno = Aluno(
         nome = aluno['nome'], 
-        turma_id = aluno['turma_id'], 
-        data_nascimento = data_nascimento,
+        turma_id = int(aluno['turma_id']), 
+        data_nascimento = datetime.strptime(aluno['data_nascimento'], "%Y-%m-%d").date(),
         nota_semestre_1 = aluno['nota_semestre_1'],
-        nota_semestre_2 = aluno['nota_semestre_2'], 
+        nota_semestre_2 = aluno['nota_semestre_2']
         )
-    novo_aluno.idade = novo_aluno.calcularIdade()
-    novo_aluno = novo_aluno.calcularMedia()
     db.session.add(novo_aluno)
     db.session.commit()
 
-    return jsonify(aluno), 200
+    return {"message": "Aluno adicionado com sucesso!"}, 201
 
 def update_aluno(aluno_id, responseUpdate):
     aluno = Aluno.query.get(aluno_id)

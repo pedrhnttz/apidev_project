@@ -6,8 +6,8 @@ alunos_ns = Namespace("alunos", description = "Operações relacionadas aos alun
 aluno_input_model = alunos_ns.model("AlunoInput",{
     "nome": fields.String(required=True, description="Nome do aluno"),
     "data_nascimento": fields.String(required=True, description="Data de nascimento (YYYY-MM-DD)"),
-    "nota_primeiro_semestre": fields.Float(required=True, description="Nota do primeiro semestre"),
-    "nota_segundo_semestre": fields.Float(required=True, description="Nota do segundo semestre"),
+    "nota_semestre_1": fields.Float(required=True, description="Nota do primeiro semestre"),
+    "nota_semestre_2": fields.Float(required=True, description="Nota do segundo semestre"),
     "turma_id": fields.Integer(required=True, description="ID da turma associada"),
 })
 
@@ -16,8 +16,8 @@ aluno_output_model = alunos_ns.model("AlunoOutput", {
     "nome": fields.String(description="Nome do aluno"),
     "idade": fields.Integer(description="Idade do aluno"),
     "data_nascimento": fields.String(description="Data de nascimento (YYYY-MM-DD)"),
-    "nota_primeiro_semestre": fields.Float(description="Nota do primeiro semestre"),
-    "nota_segundo_semestre": fields.Float(description="Nota do segundo semestre"),
+    "nota_semestre_1": fields.Float(description="Nota do primeiro semestre"),
+    "nota_semestre_2": fields.Float(description="Nota do segundo semestre"),
     "media_final": fields.Float(description="Média das notas do semestre"),
     "turma_id": fields.Integer(description="ID da turma associada"),
 })
