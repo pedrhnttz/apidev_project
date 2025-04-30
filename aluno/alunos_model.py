@@ -118,5 +118,5 @@ def delete_aluno(aluno_id):
         raise AlunoDeleteError
     db.session.delete(aluno)
     db.session.commit()
-    return jsonify({'mensagem':"aluno deletado"})
+    return {"msg":"aluno deletado"}
 
