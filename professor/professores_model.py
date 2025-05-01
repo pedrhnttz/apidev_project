@@ -5,17 +5,17 @@ from config import db
 class Professor(db.Model):
     __tablename__ = "professores"
 
-    id = db.Column(db.Integer, primary_key = True, autoincrement = True)
+    id = db.Column(db.Integer, primary_key = True)
     nome = db.Column(db.String(100), nullable = False)
     data_nascimento = db.Column(db.Date, nullable = False)
     idade = db.Column(db.Integer, nullable = False)
     disciplina = db.Column(db.String(50), nullable = False)
     salario = db.Column(db.Float, nullable = False)
 
-    def __init__(self, nome, data_nascimento, idade, disciplina, salario):
+    def __init__(self, nome, data_nascimento, disciplina, salario):
         self.nome = nome
         self.data_nascimento = data_nascimento
-        self.idade = idade
+        self.idade = self.calcularIdade()
         self.disciplina = disciplina
         self.salario = salario
 
@@ -66,12 +66,12 @@ def create_professor(professor):
         nome = professor['nome'],
         disciplina = professor['disciplina'],
         data_nascimento = datetime.strptime(professor['data_nascimento'], "%Y-%m-%d").date(),
-        salario = professor['salario']
+        salario = float(professor['salario'])
     )
     db.session.add(novo_professor)
     db.session.commit()
 
-    return jsonify(professor), 200
+    return {"message": "Professor adicionado com sucesso!"}, 201
 
 def update_professor(id_professor, professor_up):
     professor = Professor.query.get(id_professor)
@@ -79,11 +79,11 @@ def update_professor(id_professor, professor_up):
         return jsonify({'erro':'professor nao encontrado'})
     professor.nome = professor_up['nome']
     professor.disciplina = professor_up['disciplina']
-    professor.data_nascimento = professor_up['data_nascimento']
+    professor.data_nascimento = datetime.strptime(professor_up['data_nascimento'], "%Y-%m-%d").date()
     professor.salario = professor_up['salario']
     professor.idade = professor.calcularIdade()
     db.session.commit()
-    return {'msg': 'Professor atualizado!'}
+    return {'msg': 'professor atualizado!'}
 
 def delete_professor(professor_id):
     professor = Professor.query.get(professor_id)
@@ -91,6 +91,6 @@ def delete_professor(professor_id):
         raise Exception('Não foi possível deletar o professor')
     db.session.delete(professor)
     db.session.commit()
-    return jsonify({'mensagem': 'Professor deletado'}), 200
+    return {"msg":"professor deletado"}
 
     

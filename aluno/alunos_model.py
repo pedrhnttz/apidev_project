@@ -103,7 +103,7 @@ def update_aluno(aluno_id, responseUpdate):
         pass
     aluno.nome = responseUpdate['nome']
     aluno.turma_id = responseUpdate['turma_id']
-    aluno.data_nascimento = responseUpdate['data_nascimento']
+    aluno.data_nascimento = datetime.strptime(responseUpdate['data_nascimento'], "%Y-%m-%d").date()
     aluno.nota_semestre_1 = responseUpdate['nota_semestre_1']
     aluno.nota_semestre_2 = responseUpdate['nota_semestre_2']
     aluno.media_final = aluno.calcularMedia()
