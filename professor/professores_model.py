@@ -12,6 +12,8 @@ class Professor(db.Model):
     disciplina = db.Column(db.String(50), nullable = False)
     salario = db.Column(db.Float, nullable = False)
 
+    turmas = db.relationship('Turma', back_populates='professor')
+
     def __init__(self, nome, data_nascimento, disciplina, salario):
         self.nome = nome
         self.data_nascimento = data_nascimento

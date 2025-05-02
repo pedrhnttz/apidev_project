@@ -1,3 +1,4 @@
+from turma.turmas_model import Turma
 from datetime import date, datetime
 from flask import jsonify
 from config import db
@@ -15,7 +16,10 @@ class Aluno(db.Model):
     nota_semestre_2 = db.Column(db.Float, nullable = False)
     media_final = db.Column(db.Float, nullable = False)
 
-    turma_id = db.Column(db.Integer, nullable = False)
+    turma = db.relationship("Turma", back_populates="alunos")
+    turma_id = db.Column(db.Integer, db.ForeignKey("turmas.id"), nullable=False)
+    
+    
 
     def __init__(self,nome,turma_id,data_nascimento,nota_semestre_1,nota_semestre_2):
         self.nome = nome
@@ -83,6 +87,9 @@ def get_aluno_by_id(id_aluno):
     raise AlunoNotFound
 
 def create_aluno(aluno):
+    turma = Turma.query.get(aluno['turma_id'])
+    if(turma is None):
+        return {"msg":"turma não existe"}, 404
     if not aluno or 'nome' not in aluno:
         return jsonify({'erro': 'aluno sem nome'}), 400
     novo_aluno = Aluno(

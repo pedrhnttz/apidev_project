@@ -6,7 +6,12 @@ class Turma(db.Model):
     materia = db.Column(db.String(100), nullable = False)
     descricao = db.Column(db.String(100), nullable = False)
     ativo = db.Column(db.Integer, nullable = False)
-    professor_id = db.Column(db.Integer, nullable = False)
+    
+    alunos = db.relationship("Aluno", back_populates="turma")
+    professor_id = db.Column(db.Integer, db.ForeignKey('professores.id'), nullable = False)
+    professor = db.relationship('Professor', back_populates="turmas")
+
+
 
     def __init__(self, id, nome, materia, descricao, ativo, professor_id):
         self.id = id
