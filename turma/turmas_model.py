@@ -1,89 +1,84 @@
-dados = {
-    'turmas': [
-        {
-            'id': 0,
-            'nome': 'ADS 3B Noite',
-            'materia': 'Análise e Desenvolvimento de Sistemas',
-            'descricao': None,
-            'ativo': None,
-            'professor_id': None
-        }
-    ]
-}
+from config import db
+class Turma(db.Model):
+    __tablename__ = "turmas"
+    id = db.Column(db.Integer, primary_key = True, autoincrement = True)
+    nome = db.Column(db.String(100), nullable = False)
+    materia = db.Column(db.String(100), nullable = False)
+    descricao = db.Column(db.String(100), nullable = False)
+    ativo = db.Column(db.Integer, nullable = False)
+    
+    alunos = db.relationship("Aluno", back_populates="turma")
+    professor_id = db.Column(db.Integer, db.ForeignKey('professores.id'), nullable = False)
+    professor = db.relationship('Professor', back_populates="turmas")
 
-IdTurma = 0
+
+
+    def __init__(self, id, nome, materia, descricao, ativo, professor_id):
+        self.id = id
+        self.nome = nome
+        self.materia = materia
+        self.descricao = descricao
+        self.ativo = ativo
+        self.professor_id = professor_id
+    
+    def to_dict(self):
+        return {
+            "id":self.id,
+            "nome":self.nome,
+            "materia":self.materia,
+            "descricao":self.descricao,
+            "ativo":self.ativo,
+            "professor_id":self.professor_id
+        }
+        
+class TurmaNotFound(Exception):
+    def __init__(self):
+        super().__init__({'Turma não encontrado'})
+
+class TurmaInvalid(Exception):
+    def __init__(self):
+        super().__init__({'Turma/Nome inválido'})
 
 # Funções de rota
 
 def get_turmas():
-    return dados['turmas']
+    turmas = Turma.query.all()
+    return [turma.to_dict() for turma in turmas]
+
 
 def get_turma_by_id(turma_id):
-    turmas = dados['turmas']
-    for turma in turmas:
-        if turma.get('id') == turma_id:
-            return turma
-    raise Exception('Turma não encontrada')
+    turma = Turma.query.get(turma_id)
+    if not turma:
+        raise Exception('Turma não encontrada')
+    return turma.to_dict() 
 
 def create_turma(turma):
-    
-    turma['nome'] = create_nome(turma)
-    turma['materia'] = create_materia(turma.get('materia'))
-
-    turma['id'] = create_id(turma.get('id'))
-
-    turma['descricao'] = turma.get('descricao', None)
-    turma['ativo'] = bool(turma.get('ativo', None))
-    turma['professo_id'] = int(turma.get('professor_id', None))
-
-    dados['turmas'].append(turma)
+    nova_turma = Turma(
+        nome = turma['nome'],
+        materia = turma['materia'],
+        descricao = turma['descricao'],
+        ativo = turma['ativo'],
+        professor_id = turma['professor_id']
+    )
+    db.session.add(nova_turma)
+    db.session.commit()
     return {'msg': 'Turma criada!'}
 
 def update_turma(turma_id, turma_up):
-    turma = get_turma_by_id(turma_id)
-
-    turma_up['nome'] = create_nome(turma_up)
-    turma_up['materia'] = create_materia(turma_up.get('materia'))
-
-    turma_up['descricao'] = turma_up.get('descricao', None)
-    turma_up['ativo'] = bool(turma_up.get('ativo', None))
-    turma_up['professo_id'] = int(turma_up.get('professor_id', None))
-
-    turma.update(turma_up)
+    turma = Turma.query.get(turma_id)
+    if not turma:
+        raise Exception('Turma não encontrada')
+    turma.nome = turma_up['nome']
+    turma.materia = turma_up['materia']
+    turma.descricao = turma_up['descricao']
+    turma.ativo = turma_up['ativo']
+    turma.professor_id = turma_up['professor_id']
     return {'msg': 'Turma atualizada!'}
 
 def delete_turma(turma_id):
+    turma = Turma.query.get(turma_id)
+    if not turma:
+        raise Exception('Não foi possível deletar a turma')
+    db.session.delete(turma)
+    db.session.commit()
 
-    turmas = dados['turmas']
-    turma = get_turma_by_id(turma_id)
-
-    turmas.remove(turma)
-
-    if turma not in turmas:
-        return {'msg': 'Turma deletada!'}
-    raise Exception('Não foi possível deletar a turma')
-
-# Funções de lógica
-
-def create_nome(turma):
-    if not turma or 'nome' not in turma:
-        raise Exception('Turma/Nome inválido')
-    nome = turma.get('nome')
-    return nome
-
-def create_materia(materia):
-    if not materia:
-        raise Exception('Materia Invalida')
-    return materia
-
-def create_id(turma_id):
-    global IdTurma
-    turmas = dados['turmas']
-    if turma_id:
-        for turma in turmas:
-            if turma['id'] == turma_id:
-                raise Exception('Este ID já está sendo utilizado')
-        return turma_id
-    else:
-        IdTurma += 1
-        return IdTurma

@@ -1,21 +1,56 @@
-from datetime import datetime
+from turma.turmas_model import Turma
+from datetime import date, datetime
+from flask import jsonify
+from config import db
 
-dados = {
-    'alunos': [
-        {
-            'id': 0,
-            'nome': 'Pedro',
-            'idade': 21,
-            'turma_id': 12,
-            'data_nascimento': '26/01/2004',
-            'nota_primeiro_semestre': 10.0,
-            'nota_segundo_semestre': 8.0,
-            'media_final': 9.0
+#Tabela Aluno
+
+class Aluno(db.Model):
+    __tablename__ = "alunos"
+
+    id = db.Column(db.Integer, primary_key = True)
+    nome = db.Column(db.String(100), nullable = False)
+    idade = db.Column(db.Integer, nullable = False)
+    data_nascimento = db.Column(db.Date, nullable = False)
+    nota_semestre_1 = db.Column(db.Float, nullable = False)
+    nota_semestre_2 = db.Column(db.Float, nullable = False)
+    media_final = db.Column(db.Float, nullable = False)
+
+    turma = db.relationship("Turma", back_populates="alunos")
+    turma_id = db.Column(db.Integer, db.ForeignKey("turmas.id"), nullable=False)
+    
+    
+
+    def __init__(self,nome,turma_id,data_nascimento,nota_semestre_1,nota_semestre_2):
+        self.nome = nome
+        self.turma_id = turma_id
+        self.data_nascimento = data_nascimento
+        self.nota_semestre_1 = nota_semestre_1
+        self.nota_semestre_2 = nota_semestre_2
+        self.idade = self.calcularIdade()
+        self.media_final = self.calcularMedia()
+    
+    def to_dict(self):
+        return {
+            "id":self.id,
+            "nome":self.nome,
+            "idade":self.idade,
+            "turma_id":self.turma_id,
+            "data_nascimento":self.data_nascimento,
+            "nota_semestre_1":self.nota_semestre_1,
+            "nota_semestre_2":self.nota_semestre_2,
+            "media_final":self.media_final,
+
         }
-    ]
-}
+    
+    def calcularIdade(self):
+        today = date.today()
+        return today.year - self.data_nascimento.year - ((today.month, today.day) < (self.data_nascimento.month, self.data_nascimento.day))
+    
+    def calcularMedia(self):
+        media = (self.nota_semestre_1 + self.nota_semestre_2) / 2
+        return media
 
-idAluno = 0
 
 # Classes de exceções
 
@@ -42,91 +77,53 @@ class AlunoDeleteError(Exception):
 # Funções de rota
 
 def  get_alunos():
-    return dados['alunos']
+    alunos = Aluno.query.all()
+    return [aluno.to_dict() for aluno in alunos]
 
 def get_aluno_by_id(id_aluno):
-    alunos = dados['alunos']
-    for aluno in alunos:
-        if aluno.get('id') == id_aluno:
-            return aluno
+    aluno = Aluno.query.get(id_aluno)
+    if aluno:
+        return aluno.to_dict()
     raise AlunoNotFound
 
 def create_aluno(aluno):
+    turma = Turma.query.get(aluno['turma_id'])
+    if(turma is None):
+        return {"msg":"turma não existe"}, 404
+    if not aluno or 'nome' not in aluno:
+        return jsonify({'erro': 'aluno sem nome'}), 400
+    novo_aluno = Aluno(
+        nome = aluno['nome'], 
+        turma_id = int(aluno['turma_id']), 
+        data_nascimento = datetime.strptime(aluno['data_nascimento'], "%Y-%m-%d").date(),
+        nota_semestre_1 = aluno['nota_semestre_1'],
+        nota_semestre_2 = aluno['nota_semestre_2']
+        )
+    db.session.add(novo_aluno)
+    db.session.commit()
 
-    aluno['nome'] = create_nome(aluno)
-    aluno['id'] = create_id(aluno.get('id', None))
-    aluno['nota_primeiro_semestre'] = float(aluno.get('nota_primeiro_semestre', 0))
-    aluno['nota_segundo_semestre'] = float(aluno.get('nota_segundo_semestre', 0))
-    aluno['media_final'] = create_media_final(aluno['nota_primeiro_semestre'], aluno['nota_segundo_semestre'])
-    aluno['turma_id'] = float(aluno.get('turma_id', 0))
+    return {"message": "Aluno adicionado com sucesso!"}, 201
 
-    aluno['data_nascimento'] = aluno.get('data_nascimento', None)
-    aluno['idade'] = create_idade(aluno['data_nascimento'])
-
-    dados['alunos'].append(aluno)
-    return {'msg': 'Aluno criado!'}
-
-def update_aluno(aluno_id, aluno_up):
-    aluno = get_aluno_by_id(aluno_id)
-
-    aluno_up['nome'] = create_nome(aluno_up)
-    aluno_up['nota_primeiro_semestre'] = float(aluno_up.get('nota_primeiro_semestre', 0))
-    aluno_up['nota_segundo_semestre'] = float(aluno_up.get('nota_segundo_semestre', 0))
-    aluno_up['media_final'] = create_media_final(aluno_up['nota_primeiro_semestre'], aluno_up['nota_segundo_semestre'])
-    aluno_up['turma_id'] = float(aluno_up.get('turma_id', 0))
-
-    aluno_up['data_nascimento'] = aluno_up.get('data_nascimento', None)
-    aluno_up['idade'] = create_idade(aluno_up['data_nascimento'])
-
-    aluno.update(aluno_up)
+def update_aluno(aluno_id, responseUpdate):
+    aluno = Aluno.query.get(aluno_id)
+    if not aluno:
+        pass
+    aluno.nome = responseUpdate['nome']
+    aluno.turma_id = responseUpdate['turma_id']
+    aluno.data_nascimento = datetime.strptime(responseUpdate['data_nascimento'], "%Y-%m-%d").date()
+    aluno.nota_semestre_1 = responseUpdate['nota_semestre_1']
+    aluno.nota_semestre_2 = responseUpdate['nota_semestre_2']
+    aluno.media_final = aluno.calcularMedia()
+    aluno.idade = aluno.calcularIdade()
+    db.session.commit()
     return {'msg': 'Aluno atualizado!'}
     
 
 def delete_aluno(aluno_id):
-    alunos = dados['alunos']
-    aluno = get_aluno_by_id(aluno_id)
+    aluno = Aluno.query.get(aluno_id)
+    if not aluno:
+        raise AlunoDeleteError
+    db.session.delete(aluno)
+    db.session.commit()
+    return {"msg":"aluno deletado"}
 
-    alunos.remove(aluno)
-
-    if aluno not in alunos:
-        return {'msg': 'Aluno deletado!'}
-    raise AlunoDeleteError
-
-# Funções de lógica
-
-def create_nome(aluno):
-    if not aluno or 'nome' not in aluno:
-        raise AlunoInvalid
-    nome = aluno.get('nome')
-    return nome
-
-def create_id(id_aluno):
-    global idAluno
-    alunos = dados['alunos']
-    if id_aluno:
-        for a in alunos:
-            if a['id'] == id_aluno:
-                raise IdAlreadyExists
-        return id_aluno
-    else:
-        idAluno += 1
-        return idAluno
-    
-def create_media_final(n1, n2):
-    media = (n1 + n2) / 2
-    media_format = f"{media:.1f}"
-    return media_format
-
-def create_idade(data_nascimento):
-    if data_nascimento:
-        try:
-            data_nasc = datetime.strptime(data_nascimento, '%d/%m/%Y')
-            data_atual = datetime.today()
-            idade = int(data_atual.year - data_nasc.year - ((data_atual.month, data_atual.day) < (data_nasc.month, data_nasc.day)))
-            if idade >= 18:
-                return idade
-            raise AlunoUnderage
-        except ValueError:
-            return None
-    else:
-        return None
